@@ -1,0 +1,19 @@
+data: 
+    train: 
+        dir : 'datasets/DDR/train'
+        batch_size : 4
+        num_workers : 2
+    val: 
+        dir : 'datasets/DDR/valid'
+        batch_size : 16
+        num_workers : 4
+    test: 
+        dir : 'datasets/DDR/test'
+        batch_size : 16
+        num_workers : 4
+
+seed : 42
+model_path : "google/vit-large-patch16-224"
+ckpt_path : checkpoints
+log_path : logs
+n_epochs : 1
