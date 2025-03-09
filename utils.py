@@ -66,18 +66,21 @@ def get_dataloaders(cfg):
     train_loader = DataLoader(
         train_ds, shuffle=True,
         batch_size=cfg.train.batch_size,
-        num_workers=cfg.train.num_workers
+        num_workers=cfg.train.num_workers, 
+        pin_memory=False
     )
 
     valid_loader = DataLoader(
         valid_ds, shuffle=False,
         batch_size=cfg.val.batch_size,
         num_workers=cfg.val.num_workers,
+        pin_memory=False
     )
 
     test_loader = DataLoader(
         test_ds, shuffle=False,
         batch_size=cfg.test.batch_size,
         num_workers=cfg.test.num_workers,
+        pin_memory=False
     )
     return train_loader, valid_loader, test_loader
