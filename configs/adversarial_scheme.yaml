@@ -1,0 +1,40 @@
+data: 
+    train: 
+        dirs : [ 'datasets/DDR/train', 'datasets/Messidor/train']
+        batch_size : 64
+        num_workers : 8
+    val: 
+        dirs : [ 'datasets/DDR/valid', 'datasets/Messidor/valid']
+        batch_size : 64
+        num_workers : 8
+    test: 
+        dirs : [ 'datasets/DDR/test', 'datasets/Messidor/test']
+        batch_size : 64
+        num_workers : 8
+    
+    labeled_ratio : 0.2
+    
+
+optimizer_clf:
+  _target_: torch.optim.AdamW
+  #lr: 2e-4
+  weight_decay: 1e-2
+  betas: [0.9, 0.999]
+  
+optimizer_domain_clf:
+  _target_: torch.optim.Adam
+  lr: 1e-3
+  weight_decay: 1e-5
+  betas: [0.9, 0.999]
+  
+domain_clf:
+  _target_: torch.nn.LazyLinear
+  out_features : 1
+  
+seed : 42
+hf_model_path : "google/vit-large-patch16-224"
+tuned_model_path : "checkpoints/model_epoch_2_acc_0.815.pth"
+ckpt_path : checkpoints_adv
+log_path : logs_adv
+device : 'cuda'
+n_epochs : 5
