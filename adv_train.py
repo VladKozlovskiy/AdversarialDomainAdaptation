@@ -24,8 +24,8 @@ def train_clf_steps(num_steps, model, domain_clf, loader, optimizer, writer, glo
         y = y.to(model.device)
         
         optimizer.zero_grad()
-        out_clf =  model(X)
-        print(out_clf.keys())
+        #out_clf =  model(X)
+        #print(out_clf.keys())
         clf_token_embed = model.vit(X)['last_hidden_state'][:, 0, :]
         pred_domain = domain_clf(clf_token_embed)
         pred_clf = model.classifier(clf_token_embed)
@@ -39,7 +39,7 @@ def train_clf_steps(num_steps, model, domain_clf, loader, optimizer, writer, glo
         if batch_idx > num_steps: 
             return 
     
-def train_domain_clf_steps(model, domain_clf, loader, optimizer, writer, glob_epoch_idx): 
+def train_domain_clf_steps(num_steps, model, domain_clf, loader, optimizer, writer, glob_epoch_idx): 
     domain_adv_loss = torch.nn.BCEWithLogitsLoss()
     
     for batch_idx, batch in tqdm(enumerate(loader), total=len(loader)): 
@@ -138,11 +138,11 @@ def run_training(cfg):
     writer = SummaryWriter(cfg.log_path)
     
     logging.info(f'Starting training')
-    #train_domain_clf_steps(10000, model, domain_clf, train_clf_loader, optimizer_clf, writer, glob_epoch_idx = 0 )
+    train_domain_clf_steps(10000, model, domain_clf, train_clf_loader, optimizer_clf, writer, glob_epoch_idx = 0 )
     
     for glob_epoch_idx in range(cfg.n_epochs):
         logging.info(f'Classification step')
-        train_clf_steps(7, model, domain_clf, train_clf_loader, optimizer_clf, writer, glob_epoch_idx = 0 )
+        train_clf_steps(8, model, domain_clf, train_clf_loader, optimizer_clf, writer, glob_epoch_idx = 0 )
         logging.info(f'Domain step')
         train_domain_clf_steps(5, model, domain_clf, train_domain_clf_loader, optimizer_domain_clf, writer, glob_epoch_idx = 0 )
         
