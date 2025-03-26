@@ -8,19 +8,24 @@ from utils import get_dataloaders, set_all_seeds
 
     
     
-def train_epoch(model, loader, optimizer, writer, glob_epoch_idx): 
+def train_epoch(model, loader, optimizer, writer, glob_epoch_idx):
+    
     acc = 0
     avg_loss = 0
+    
     for batch_idx, batch in tqdm(enumerate(loader), total=len(loader)): 
         
         X, y = batch
         X = X.to(model.device)
         y = y.to(model.device)
+        
         optimizer.zero_grad()
         pred = model(pixel_values = X, labels = y)
         pred.loss.backward()
+        
         optimizer.step()
         class_pred = pred.logits.argmax(axis = 1)
+        
         acc += (class_pred == y).type(torch.float).mean()
         avg_loss += pred.loss.item()
         
@@ -30,6 +35,7 @@ def train_epoch(model, loader, optimizer, writer, glob_epoch_idx):
         
         del pred
         torch.cuda.empty_cache()
+        
     writer.add_scalar("Train/loss_epoch", avg_loss / len(loader), glob_epoch_idx)
     writer.add_scalar("Train/acc_epoch", acc / len(loader), glob_epoch_idx )
       
@@ -62,13 +68,15 @@ def eval_epoch(model, loader, writer, glob_epoch_idx, test = False):
     
 @hydra.main(version_base=None, config_path="configs", config_name="main")    
 def run_training(cfg): 
+    
     set_all_seeds(cfg.seed)
     train_loader, valid_loader, test_loader = get_dataloaders(cfg.data)
     model = ViTForImageClassification.from_pretrained(cfg.model_path)
     model = model.to('cuda')
     optimizer = torch.optim.Adam(model.parameters(), lr=2e-5, weight_decay = 0.01)
     writer = SummaryWriter(cfg.log_path)
-    for glob_epoch_idx in range(cfg.n_epochs): 
+    for glob_epoch_idx in range(cfg.n_epochs):
+        
         train_epoch(model, train_loader, optimizer, writer, glob_epoch_idx)
         eval_loss, eval_acc = eval_epoch(model, valid_loader, writer, glob_epoch_idx)
         
