@@ -254,16 +254,18 @@ Our approach
 
 ## References
 
-[1] 
+[1] https://arxiv.org/pdf/2103.08501
 
-[2]
+[2] https://www.adcis.net/en/third-party/messidor/
 
-[3]
+[3] https://ieee-dataport.org/open-access/indian-diabetic-retinopathy-image-dataset-idrid
 
-[4]
+[4] https://www.kaggle.com/competitions/aptos2019-blindness-detection/overview/aptos-2019 
 
-[5]
+[5] https://arxiv.org/abs/2008.09772
 
-[6]
+[6] https://arxiv.org/abs/1505.07818
 
-[7]
+[7] https://arxiv.org/abs/1702.05464
+
+[8] https://arxiv.org/abs/2010.11929
