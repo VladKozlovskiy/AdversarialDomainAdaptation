@@ -99,26 +99,35 @@ def eval_epoch(model, loader, writer, glob_epoch_idx, test = False):
     
 @hydra.main(version_base=None, config_path="configs", config_name="domain_finetune")    
 def run_training(cfg): 
-    
+
     set_all_seeds(cfg.seed)
-    train_loader, valid_loader, test_loader, _, _, _ = get_mixed_dataloader(cfg.data)
+    
+    if not os.path.exists(cfg.ckpt_path):
+        os.makedirs(cfg.ckpt_path)
+        
+    train_loader, valid_loader, test_loader = get_dataloaders(cfg.data)
     model = ViTForImageClassification.from_pretrained(cfg.hf_model_path)
     model.load_state_dict(torch.load(cfg.tuned_model_path)['model_state_dict'])
     model = model.to(cfg.device)
-    optimizer = torch.optim.Adam(model.parameters(), lr=2e-5, weight_decay = 0.01)
+    optimizer = torch.optim.Adam(model.parameters(), lr=2e-5)
     writer = SummaryWriter(cfg.log_path)
+    max_kappa = 0
     for glob_epoch_idx in range(cfg.n_epochs):
         
         train_epoch(model, train_loader, optimizer, writer, glob_epoch_idx)
         clf_f1, clf_kappa = eval_epoch(model, valid_loader, writer, glob_epoch_idx)
         
-        torch.save({
-                'epoch': glob_epoch_idx,
-                'model_state_dict': model.state_dict(),
-                'optimizer_state_dict': optimizer.state_dict(),
-                }, f'{cfg.ckpt_path}/model_epoch_{glob_epoch_idx}_kappa_{clf_kappa:.3f}.pth')
-        
-    eval_epoch(model, test_loader, writer, glob_epoch_idx, test = True)
+        if clf_kappa > max_kappa:
+            
+            for item in os.listdir(cfg.ckpt_path): 
+                    os.remove(f'{cfg.ckpt_path}/{item}')
+                
+            torch.save({
+                    'epoch': glob_epoch_idx,
+                    'model_state_dict': model.state_dict(),
+                    'optimizer_state_dict': optimizer.state_dict(),
+                    }, f'{cfg.ckpt_path}/model_epoch_{glob_epoch_idx}_kappa_{clf_kappa:.3f}.pth')
+            max_kappa = clf_kappa
 
 
 if __name__ == '__main__': 

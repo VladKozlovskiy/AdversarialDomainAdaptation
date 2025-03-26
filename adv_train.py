@@ -169,14 +169,14 @@ def run_training(cfg):
     model = model.to(cfg.device)
     
     domain_clf = torch.nn.Sequential(
-        torch.nn.LazyLinear(64), 
-        torch.nn.PReLU(),
+        #torch.nn.LazyLinear(64), 
+        #torch.nn.PReLU(),
         torch.nn.LazyLinear(1),
     ).to(cfg.device)
     
     optimizer_domain_clf = hydra.utils.instantiate(cfg.optimizer_domain_clf, domain_clf.parameters())
     optimizer_clf = hydra.utils.instantiate(cfg.optimizer_clf, [
-        {'params': model.parameters(), 'lr': 3e-4},
+        {'params': model.parameters(), 'lr': 3e-5},
         {'params': domain_clf.parameters(), 'lr': 0}
     ])
     
@@ -186,7 +186,7 @@ def run_training(cfg):
     writer = SummaryWriter(cfg.log_path)
     global_step = 0
     
-    max_clf_acc = 0
+    max_clf_kappa = 0
     
     for epoch in range(cfg.n_epochs):
         log.info(f'Epoch {epoch+1}/{cfg.n_epochs}')
@@ -201,14 +201,14 @@ def run_training(cfg):
             log.info('Evaluation step')
             clf_loss, clf_acc, clf_f1, clf_kappa, domain_loss, domain_acc = eval_epoch(model, domain_clf, valid_clf_loader, valid_domain_clf_loader, writer, epoch, prefix='Validation')
 
-            if clf_acc > max_clf_acc: 
+            if clf_kappa > max_clf_kappa: 
 
                 torch.save({
                     'epoch': global_step,
                     'model_state_dict': model.state_dict(),
-                    }, f'{cfg.ckpt_path}/model_epoch_{global_step}_acc_{clf_acc:.3f}.pth')
+                    }, f'{cfg.ckpt_path}/model_epoch_{global_step}_kappa_{clf_kappa:.3f}.pth')
 
-                max_clf_acc = clf_acc
+                max_clf_kappa = clf_kappa
 
 
 if __name__ == '__main__': 

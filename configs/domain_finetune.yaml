@@ -1,19 +1,19 @@
 data: 
     train: 
-        dirs : [ 'datasets/DDR/train', 'datasets/Messidor/train']
+        path : 'datasets/Messidor/train'
         batch_size : 64
         num_workers : 8
+        ratio : 0.3
     val: 
-        dirs : [ 'datasets/DDR/valid', 'datasets/Messidor/valid']
+        path : 'datasets/Messidor/valid'
         batch_size : 64
         num_workers : 8
+        ratio : 1
     test: 
-        dirs : [ 'datasets/DDR/test', 'datasets/Messidor/test']
+        path : 'datasets/Messidor/test'
         batch_size : 64
         num_workers : 8
-    
-    labeled_ratio : 0.3
-    
+        ratio : 1
 
 optimizer_clf:
   _target_: torch.optim.AdamW
@@ -33,11 +33,11 @@ domain_clf:
   
 seed : 42
 hf_model_path : "google/vit-large-patch16-224"
-tuned_model_path : "checkpoints/model_epoch_2_acc_0.815.pth"
-ckpt_path : checkpoints_fntn
-log_path : logs/logs_fntn
+tuned_model_path : "checkpoints/checkpoints_DDR_tune/model_epoch_2_acc_0.815.pth"
+ckpt_path : checkpoints/checkpoints_fntn_messidor_only_100_ep
+log_path : logs/logs_fntn_messidor_only_100_ep
 device : 'cuda'
-n_epochs : 3
+n_epochs : 150
 clf_steps : 9
 domain_steps : 4
 eval_period : 5

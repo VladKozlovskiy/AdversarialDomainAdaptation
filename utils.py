@@ -54,40 +54,25 @@ def get_transform(mean, std, mode='train', crop_size=224):
 
     return lambda x: transform(image=np.array(x))['image']
 
+def get_loader(cfg, transform): 
+    ds = ImageFolder(cfg.path, transform)
+    ds_sz = len(ds)
+    indices = torch.randperm(ds_sz)[:int(cfg.ratio*ds_sz)]
+    ds =  Subset(ds, indices=indices)
+    return DataLoader(
+        ds, shuffle=True,
+        batch_size=cfg.batch_size,
+        num_workers=cfg.num_workers, 
+        pin_memory=False
+    )
 
-def get_dataloaders(cfg): 
-    train_transform = get_transform(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225], mode='train')
+def get_dataloaders(cfg, mode = 'train'): 
+    train_transform = get_transform(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225], mode=mode)
     eval_transform = get_transform(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225], mode='eval')
-    # 'datasets/DDR/train'
-    train_ds = ImageFolder(cfg.train.dir, transform=train_transform)
-    valid_ds = ImageFolder(cfg.val.dir, transform=eval_transform)
-    test_ds = ImageFolder(cfg.test.dir, transform=eval_transform)
-    
-    train_loader = DataLoader(
-        train_ds, shuffle=True,
-        batch_size=cfg.train.batch_size,
-        num_workers=cfg.train.num_workers, 
-        pin_memory=False
-    )
-
-    valid_loader = DataLoader(
-        valid_ds, shuffle=False,
-        batch_size=cfg.val.batch_size,
-        num_workers=cfg.val.num_workers,
-        pin_memory=False
-    )
-
-    test_loader = DataLoader(
-        test_ds, shuffle=False,
-        batch_size=cfg.test.batch_size,
-        num_workers=cfg.test.num_workers,
-        pin_memory=False
-    )
-    return train_loader, valid_loader, test_loader
+    return get_loader(cfg.train, train_transform), get_loader(cfg.val, eval_transform), get_loader(cfg.test, eval_transform) 
 
 
-
-class DomainClassificationDataset(Dataset):
+class DomainClassificationDataset(Dataset): 
     def __init__(self, datasets, labels):
         """
         datasets --- list of ImageFolders form different domains
@@ -95,31 +80,31 @@ class DomainClassificationDataset(Dataset):
         super().__init__()
         self.datasets = datasets
         self.labels = labels
-
+        
     def __len__(self):
         return sum(list(map(len, self.datasets)))
 
     def __getitem__(self, idx):
         ds_idx = 0
-
+        
         while idx >= 0:
             idx -= len(self.datasets[ds_idx])
             ds_idx += 1
 
         ds_idx -= 1
         idx += len(self.datasets[ds_idx])
-
-
+        
+        
         image = self.datasets[ds_idx][idx][0]
         label = self.labels[ds_idx]
-
+        
         return image, label
 
-def get_loader_from_ds(cfg, ds_lst):
+def get_loader_from_ds(cfg, ds_lst): 
     train_loader = DataLoader(
         ds_lst[0], shuffle=True,
         batch_size=cfg.train.batch_size,
-        num_workers=cfg.train.num_workers,
+        num_workers=cfg.train.num_workers, 
         pin_memory=False
     )
 
@@ -138,49 +123,55 @@ def get_loader_from_ds(cfg, ds_lst):
     )
     return train_loader, valid_loader, test_loader
 
-def get_mixed_dataloader(cfg):
+def get_ds_part(): 
+    
+    pass
+
+def get_mixed_dataloader(cfg): 
     """
-    Function for getting mixed dataset setup.
-    Mixed dataset setup -- emulating s ceratin ratio of labeled / unlabeled examples from old / new domain.
+    Function for getting mixed dataset setup. 
+    Mixed dataset setup -- emulating s ceratin ratio of labeled / unlabeled examples from old / new domain. 
     output : train, validation and test dataloaders
     """
-
+    
     train_transform = get_transform(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225], mode='train')
     eval_transform = get_transform(mean = [0.485, 0.456, 0.406], std = [0.229, 0.224, 0.225], mode='eval')
     # 'datasets/DDR/train'
-
-    train_ds_lst = []
-    valid_ds_lst = []
+    
+    train_ds_lst = [] 
+    valid_ds_lst = [] 
     test_ds_lst = []
-
-    for train_dir, val_dir, test_dir in zip(cfg.train.dirs, cfg.val.dirs, cfg.test.dirs):
-
+    
+    for train_dir, val_dir, test_dir in zip(cfg.train.dirs, cfg.val.dirs, cfg.test.dirs): 
+        
         train_ds = ImageFolder(train_dir, transform=train_transform)
         valid_ds = ImageFolder(val_dir, transform=eval_transform)
         test_ds = ImageFolder(test_dir, transform=eval_transform)
-
+        
         train_ds_lst.append(train_ds)
         valid_ds_lst.append(valid_ds)
         test_ds_lst.append(test_ds)
-
+    
     clf_ds_splits = []
-
+    
     indices = torch.randperm(len(train_ds_lst[1]))[:int(cfg.labeled_ratio *len(train_ds_lst[1]))]
     clf_ds_splits.append(  ConcatDataset( [train_ds_lst[0], Subset(train_ds_lst[1], indices=indices) ] ) )
-
+    
     indices = torch.randperm(len(valid_ds_lst[1]))[:int(cfg.labeled_ratio *len(valid_ds_lst[1]))]
     clf_ds_splits.append(  ConcatDataset( [valid_ds_lst[0], Subset(valid_ds_lst[1], indices=indices) ] ) )
-
+    
     indices = torch.randperm(len(test_ds_lst[1]))[:int(cfg.labeled_ratio *len(test_ds_lst[1]))]
-    clf_ds_splits.append(  ConcatDataset( [test_ds_lst[0], Subset(test_ds_lst[1], indices=indices) ] ) )
-
+    clf_ds_splits.append(  ConcatDataset( [test_ds_lst[0], Subset(test_ds_lst[1], indices=indices) ] ) ) 
+                         
     train_clf_loader, valid_clf_loader, test_clf_loader = get_loader_from_ds(cfg, clf_ds_splits)
-
-
+                         
+                         
     domain_clf_ds_splits = []
+    
     domain_clf_ds_splits.append(DomainClassificationDataset([train_ds_lst[0], train_ds_lst[1]], [0, 1] ))
     domain_clf_ds_splits.append(DomainClassificationDataset([valid_ds_lst[0], valid_ds_lst[1]], [0, 1] ))
     domain_clf_ds_splits.append(DomainClassificationDataset([test_ds_lst[0], test_ds_lst[1]], [0, 1] ))
+    
     train_domain_clf_loader, valid_domain_clf_loader, test_domain_clf_loader = get_loader_from_ds(cfg, domain_clf_ds_splits)
-
+                         
     return train_clf_loader, valid_clf_loader, test_clf_loader, train_domain_clf_loader, valid_domain_clf_loader, test_domain_clf_loader
