@@ -52,13 +52,17 @@ Our key contribution is based in the following observations :
 
 * This is very  similar to GAN pipeline, when a model trains to generate samples based on discriminative feedback. 
 
-There were also fruitful prior works in field, but to our best knowledge , they were not adopted to biomedical field, nor developed deeper. 
+There were also fruitful prior works in field [6, 7] , but to our best knowledge , they were not adopted to biomedical field, nor developed deeper. 
 
 So, our main pipeline may be described as followed : 
 
-**[TODO till Friday : create an inage of pipline]** 
+### Step 1 
 
-**[TODO till Friday : more formal description with losses, ect.]** 
+![alt text](assets/step1.png)
+
+### Step 2
+
+![alt text](assets/step2.png)
 
 ## Experiments' setup description 
 
@@ -66,7 +70,7 @@ In this section our experimental setup ans expectations would be discussed.
 
 ### Baseline 
 
-As a simple and main baseline we treat a ViT model, pretrained on ImageNet and fully finetuned on the largest of out datasets &mdash; DDR. 
+As a simple and main baseline we treat a ViT [8] model, pretrained on ImageNet and fully finetuned on the largest of out datasets &mdash; DDR. 
 
 In our first experiment we evaluate this weights on the other datasets and with this we'd like to demonstrate the problem of domain shift. 
 
